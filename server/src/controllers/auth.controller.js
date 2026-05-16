@@ -1,0 +1,133 @@
+const userModel = require("../models/user.model")
+const jwt = require("jsonwebtoken")
+const tokenBlackListModel = require("../models/blackList.model")
+
+async function userRegisterController(req, res) {
+    try {
+        const email = req.body.email?.trim().toLowerCase()
+        const name = req.body.name?.trim()
+        const { password } = req.body
+
+        if (!email || !password || !name) {
+            return res.status(400).json({
+                message: "Name, email, and password are required"
+            })
+        }
+
+        const isExists = await userModel.findOne({
+            email: email
+        })
+
+        if (isExists) {
+            return res.status(422).json({
+                message: "User already exists with email.",
+                status: "failed"
+            })
+        }
+
+        const user = await userModel.create({
+            email, password, name
+        })
+
+        const accountModel = require("../models/account.model");
+        const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+        await accountModel.create({
+            user: user._id,
+            accountNumber: accountNumber
+        });
+
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "3d" })
+
+        res.cookie("token", token)
+
+        res.status(201).json({
+            user: {
+                _id: user._id,
+                email: user.email,
+                name: user.name,
+                systemUser: Boolean(user.systemUser)
+            },
+            token
+        })
+    } catch (error) {
+        console.error("Register Error:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+}
+
+async function userLoginController(req, res) {
+    try {
+        const email = req.body.email?.trim().toLowerCase()
+        const { password } = req.body
+
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Email and password are required"
+            })
+        }
+
+        const user = await userModel.findOne({ email }).select("+password +systemUser")
+
+        if (!user) {
+            return res.status(401).json({
+                message: "Email or password is INVALID"
+            })
+        }
+
+        const isValidPassword = await user.comparePassword(password)
+
+        if (!isValidPassword) {
+            return res.status(401).json({
+                message: "Email or password is INVALID"
+            })
+        }
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "3d" })
+
+        res.cookie("token", token)
+
+        res.status(200).json({
+            user: {
+                _id: user._id,
+                email: user.email,
+                name: user.name,
+                systemUser: Boolean(user.systemUser)
+            },
+            token
+        })
+    } catch (error) {
+        console.error("Login Error:", error);
+        res.status(500).json({ message: error.message || "Internal server error" });
+    }
+}
+
+async function userLogoutController(req, res) {
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[ 1 ]
+
+    if (!token) {
+        return res.status(200).json({
+            message: "User logged out successfully"
+        })
+    }
+
+
+
+    await tokenBlackListModel.create({
+        token: token
+    })
+
+    res.clearCookie("token")
+
+    res.status(200).json({
+        message: "User logged out successfully"
+    })
+
+}
+
+
+module.exports = {
+    userRegisterController,
+    userLoginController,
+    userLogoutController
+}
