@@ -55,8 +55,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      await loadAccounts();
-      await loadTransactions();
+      await Promise.all([loadAccounts(), loadTransactions()]);
     };
 
     load();

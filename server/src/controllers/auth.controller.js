@@ -1,5 +1,6 @@
 const userModel = require("../models/user.model")
 const jwt = require("jsonwebtoken")
+const bcrypt = require("bcryptjs")
 const tokenBlackListModel = require("../models/blackList.model")
 
 async function userRegisterController(req, res) {
@@ -67,7 +68,7 @@ async function userLoginController(req, res) {
             })
         }
 
-        const user = await userModel.findOne({ email }).select("+password +systemUser")
+        const user = await userModel.findOne({ email }).select("+password +systemUser").lean()
 
         if (!user) {
             return res.status(401).json({
@@ -75,7 +76,7 @@ async function userLoginController(req, res) {
             })
         }
 
-        const isValidPassword = await user.comparePassword(password)
+        const isValidPassword = await bcrypt.compare(password, user.password)
 
         if (!isValidPassword) {
             return res.status(401).json({

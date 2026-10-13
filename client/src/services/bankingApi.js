@@ -2,6 +2,8 @@ import api from './api';
 
 export { default } from './api';
 
+export const ping = () => api.get('/ping');
+
 export const login = (email, password) => api.post('/auth/login', { email, password });
 
 export const register = (name, email, password) =>

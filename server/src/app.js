@@ -33,6 +33,10 @@ app.get("/api", (req, res) => {
     })
 })
 
+app.get("/api/ping", (req, res) => {
+    res.status(200).json({ status: "alive", timestamp: Date.now() })
+})
+
 app.use("/api/auth", authRouter)
 app.use("/api/accounts", accountRouter)
 app.use("/api/transactions", transactionRoutes)

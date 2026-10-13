@@ -59,10 +59,8 @@ export const handlers = [
     );
   }),
 
-  // Optional Mock for session validation / accounts
-  http.get('*/accounts', () => {
-    return HttpResponse.json([
-      { id: 'acc_101', accountNumber: 'NL91SAFE0123456789', balance: 14250.75, currency: 'USD' },
-    ]);
+  // Pre-warm ping mock
+  http.get('*/ping', () => {
+    return HttpResponse.json({ status: 'alive' });
   }),
 ];

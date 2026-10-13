@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import * as bankingApi from '../services/bankingApi';
 import { Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff, Loader2, Sun, Moon } from 'lucide-react';
 import SafeLedgerLogo from '../components/SafeLedgerLogo';
 
@@ -35,6 +36,9 @@ const Login = () => {
         JSON.stringify({ density: 'comfortable', surface: 'glassmorphism', fontScale: '1.0' })
       );
     }
+
+    // Pre-warm backend API connection in background to eliminate cloud cold start
+    bankingApi.ping().catch(() => {});
   }, []);
 
   const toggleTheme = () => {
